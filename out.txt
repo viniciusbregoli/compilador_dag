@@ -1,0 +1,120 @@
+#define __SFR_OFFSET 0x00
+#include <avr/io.h>
+
+.global Funcion_calculo
+.global function_busca_resultado
+
+Funcion_calculo:
+; Empilha valor 0x2
+ldi r16, 0x0
+push r16
+ldi r16, 0x2
+push r16
+; Empilha valor 0x3
+ldi r16, 0x0
+push r16
+ldi r16, 0x3
+push r16
+; Desempilha os 2 ultimos valores da pilha para os registradores
+pop r21 ; LSB do segundo valor
+pop r20 ; MSB do segundo valor
+pop r19 ; LSB do primeiro valor
+pop r18 ; MSB do primeiro valor
+; Adicao de dois valores
+add r19, r21 ; Adiciona os LSBs
+adc r18, r20 ; Adiciona os MSBs com carry
+push r18 ; Empilha o MSB do resultado
+push r19 ; Empilha o LSB do resultado
+; Empilha valor 0x5
+ldi r16, 0x0
+push r16
+ldi r16, 0x5
+push r16
+; Desempilha os 2 ultimos valores da pilha para os registradores
+pop r21 ; LSB do segundo valor
+pop r20 ; MSB do segundo valor
+pop r19 ; LSB do primeiro valor
+pop r18 ; MSB do primeiro valor
+; Inicializa os registradores para o resultado intermediário
+clr r22  ; Limpa o registrador r22 (parte baixa do resultado)
+clr r23  ;Limpa o registrador r23 (parte alta do resultado)
+clr r24 ; Limpa o registrador r24 (extensão baixa do resultado para 32 bits, opcional)
+clr r25 ; Limpa o registrador r25 (extensão alta do resultado para 32 bits, opcional)
+; Multiplica os LSBs (r19 por r21)
+mul r19, r21
+mov r22, r0 ; Move o resultado para r22
+mov r23, r1
+clr r1 ; Limpa r1 após a multiplicacao
+; Multiplica r18 por r21 e adiciona ao resultado
+mul r18, r21
+add r23, r0 ; Adiciona ao resultado
+adc r24, r1 ; Adiciona ao proximo byte, considerando carry
+clr r1      ; Limpa r1 após a multiplicacao
+; Multiplica r19 por r20 e adiciona ao resultado
+mul r19, r20
+add r23, r0 ; Adiciona ao proximo byte
+adc r24, r1 ; Adiciona ao proximo byte, considerando carry
+clr r1     ; Limpa r1 apos a multiplicacao
+; Multiplica os MSBs (r18 por r20) e adiciona ao resultado mais alto
+; Este passo pode ser omitido se estivermos interessados apenas no resultado de 16 bits mais significativo
+mul r18, r20
+add r24, r0 ; Adiciona ao byte mais baixo da extensao (opcional)
+adc r25, r1 ; Adiciona ao byte mais alto da extensao (opcional)
+clr r1     ; Limpa r1 após a multiplicacao
+; O resultado final de 16 bits mais significativo esta em r22:r23
+; Para um resultado de 32 bits, considere tambem r24:r25
+mov r17, r22
+mov r16, r23
+push r16
+push r17
+; Empilha valor 0x2
+ldi r16, 0x0
+push r16
+ldi r16, 0x2
+push r16
+; Empilha valor 0x3
+ldi r16, 0x0
+push r16
+ldi r16, 0x3
+push r16
+; Desempilha os 2 ultimos valores da pilha para os registradores
+pop r21 ; LSB do segundo valor
+pop r20 ; MSB do segundo valor
+pop r19 ; LSB do primeiro valor
+pop r18 ; MSB do primeiro valor
+; Adicao de dois valores
+add r19, r21 ; Adiciona os LSBs
+adc r18, r20 ; Adiciona os MSBs com carry
+push r18 ; Empilha o MSB do resultado
+push r19 ; Empilha o LSB do resultado
+; Desempilha os 2 ultimos valores da pilha para os registradores
+pop r21 ; LSB do segundo valor
+pop r20 ; MSB do segundo valor
+pop r19 ; LSB do primeiro valor
+pop r18 ; MSB do primeiro valor
+; Adicao de dois valores
+add r19, r21 ; Adiciona os LSBs
+adc r18, r20 ; Adiciona os MSBs com carry
+push r18 ; Empilha o MSB do resultado
+push r19 ; Empilha o LSB do resultado
+pop R17 ; Desempilha o LSB do resultado
+pop R16 ; Desempilha o MSB do resultado
+; Armazena o valor em R16(MSB) e R17(LSB) na memoria
+STS 0x100, R16
+STS 0x101, R17
+
+
+
+function_busca_resultado:
+
+    PUSH R0
+    MOV R26, R24
+    MOV R27, R25
+
+    LD R25, X
+    INC R26
+    LD R24, X
+
+    CLR R1
+    POP R0
+    RET
